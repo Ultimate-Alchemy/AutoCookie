@@ -54,6 +54,9 @@ AC.init = function() {
 			AC.Display.UpdateMenu();
 		}
 		
+		// Start the stats HUD.
+		AC.Display.startStatsHUD();
+
 		// Notify the player that Auto Cookie has loaded.
 		if (Game.prefs.popups) {Game.Popup('Auto Cookie ' + AC.Version.Full + ' loaded.')} else {Game.Notify('Auto Cookie ' + AC.Version.Full + ' loaded.', '', '', 1, 1)}
 	}, 500);
@@ -751,6 +754,56 @@ AC.Settings = {
 	'A': [],	// Settings of the automated actions. This is loaded from the save data when AC.load() is called and updated whenever AC.save() is called.
 	'C': '',	// Auto Cookie's favorite cookie.
 	'S': 1,	// Whether or not Auto Cookie's settings have been collapsed (0 means collapsed).
+}
+
+/*******************************************************************************
+ * Stats HUD - Shows CPS, Cookies per Click, and total cookies in a box
+ ******************************************************************************/
+AC.Display.createStatsHUD = function() {
+	var hud = document.createElement('div');
+	hud.id = 'AC-stats-hud';
+	hud.style.cssText = 'position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.85);color:#fff;padding:10px 16px;border-radius:8px;border:1px solid #555;font-family:monospace;font-size:13px;z-index:10000;min-width:220px;pointer-events:auto;user-select:none;';
+
+	var title = document.createElement('div');
+	title.style.cssText = 'font-weight:bold;color:gold;margin-bottom:6px;font-size:14px;';
+	title.textContent = 'Auto Cookie Stats';
+	hud.appendChild(title);
+
+	var cpsLine = document.createElement('div');
+	cpsLine.id = 'AC-hud-cps';
+	cpsLine.style.marginBottom = '3px';
+	hud.appendChild(cpsLine);
+
+	var clickLine = document.createElement('div');
+	clickLine.id = 'AC-hud-click';
+	clickLine.style.marginBottom = '3px';
+	hud.appendChild(clickLine);
+
+	var totalLine = document.createElement('div');
+	totalLine.id = 'AC-hud-total';
+	hud.appendChild(totalLine);
+
+	document.body.appendChild(hud);
+}
+
+AC.Display.updateStatsHUD = function() {
+	var cpsEl = document.getElementById('AC-hud-cps');
+	var clickEl = document.getElementById('AC-hud-click');
+	var totalEl = document.getElementById('AC-hud-total');
+	if (!cpsEl) return;
+
+	var cps = Game.cookiesPs || 0;
+	var mouseCps = Game.computedMouseCps || 0;
+	var total = Game.cookies || 0;
+
+	cpsEl.innerHTML = '<span style="color:#8f8">CPS:</span> ' + Beautify(cps, 1);
+	clickEl.innerHTML = '<span style="color:#8bf">Per Click:</span> ' + Beautify(mouseCps, 1);
+	totalEl.innerHTML = '<span style="color:#fd8">Cookies:</span> ' + Beautify(total, 1);
+}
+
+AC.Display.startStatsHUD = function() {
+	AC.Display.createStatsHUD();
+	setInterval(AC.Display.updateStatsHUD, 200);
 }
 
 /*******************************************************************************
