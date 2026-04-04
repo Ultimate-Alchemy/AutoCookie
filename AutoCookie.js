@@ -762,28 +762,38 @@ AC.Settings = {
 AC.Display.createStatsHUD = function() {
 	var hud = document.createElement('div');
 	hud.id = 'AC-stats-hud';
-	hud.style.cssText = 'position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.85);color:#fff;padding:10px 16px;border-radius:8px;border:1px solid #555;font-family:monospace;font-size:13px;z-index:10000;min-width:220px;pointer-events:auto;user-select:none;';
+	hud.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);font-family:monospace;font-size:13px;z-index:10000;pointer-events:none;user-select:none;text-align:center;white-space:nowrap;';
 
-	var title = document.createElement('div');
-	title.style.cssText = 'font-weight:bold;color:gold;margin-bottom:6px;font-size:14px;';
-	title.textContent = 'Auto Cookie Stats';
-	hud.appendChild(title);
-
-	var cpsLine = document.createElement('div');
+	var cpsLine = document.createElement('span');
 	cpsLine.id = 'AC-hud-cps';
-	cpsLine.style.marginBottom = '3px';
 	hud.appendChild(cpsLine);
 
-	var clickLine = document.createElement('div');
+	var sep1 = document.createElement('span');
+	sep1.textContent = '  |  ';
+	sep1.style.color = '#888';
+	hud.appendChild(sep1);
+
+	var clickLine = document.createElement('span');
 	clickLine.id = 'AC-hud-click';
-	clickLine.style.marginBottom = '3px';
 	hud.appendChild(clickLine);
 
-	var totalLine = document.createElement('div');
+	var sep2 = document.createElement('span');
+	sep2.textContent = '  |  ';
+	sep2.style.color = '#888';
+	hud.appendChild(sep2);
+
+	var totalLine = document.createElement('span');
 	totalLine.id = 'AC-hud-total';
 	hud.appendChild(totalLine);
 
-	document.body.appendChild(hud);
+	// Append to the sectionLeft (cookie/milk area)
+	var sectionLeft = l('sectionLeft');
+	if (sectionLeft) {
+		sectionLeft.style.position = 'relative';
+		sectionLeft.appendChild(hud);
+	} else {
+		document.body.appendChild(hud);
+	}
 }
 
 AC.Display.updateStatsHUD = function() {
