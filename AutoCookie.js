@@ -777,15 +777,6 @@ AC.Display.createStatsHUD = function() {
 	clickLine.id = 'AC-hud-click';
 	hud.appendChild(clickLine);
 
-	var sep2 = document.createElement('span');
-	sep2.textContent = '  |  ';
-	sep2.style.color = '#888';
-	hud.appendChild(sep2);
-
-	var totalLine = document.createElement('span');
-	totalLine.id = 'AC-hud-total';
-	hud.appendChild(totalLine);
-
 	// Append to the sectionLeft (cookie/milk area)
 	var sectionLeft = l('sectionLeft');
 	if (sectionLeft) {
@@ -799,16 +790,13 @@ AC.Display.createStatsHUD = function() {
 AC.Display.updateStatsHUD = function() {
 	var cpsEl = document.getElementById('AC-hud-cps');
 	var clickEl = document.getElementById('AC-hud-click');
-	var totalEl = document.getElementById('AC-hud-total');
 	if (!cpsEl) return;
 
 	var cps = Game.cookiesPs || 0;
 	var mouseCps = Game.computedMouseCps || 0;
-	var total = Game.cookies || 0;
 
 	cpsEl.innerHTML = '<span style="color:#8f8">CPS:</span> ' + Beautify(cps, 1);
 	clickEl.innerHTML = '<span style="color:#8bf">Per Click:</span> ' + Beautify(mouseCps, 1);
-	totalEl.innerHTML = '<span style="color:#fd8">Cookies:</span> ' + Beautify(total, 1);
 }
 
 AC.Display.startStatsHUD = function() {
