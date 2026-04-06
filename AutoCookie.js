@@ -54,6 +54,9 @@ AC.init = function() {
 			AC.Display.UpdateMenu();
 		}
 		
+		// Inject Buy All button into the store.
+		AC.BuyAll.inject();
+
 		// Start the stats HUD.
 		AC.Display.startStatsHUD();
 
@@ -764,6 +767,127 @@ AC.Settings = {
 	'A': [],	// Settings of the automated actions. This is loaded from the save data when AC.load() is called and updated whenever AC.save() is called.
 	'C': '',	// Auto Cookie's favorite cookie.
 	'S': 1,	// Whether or not Auto Cookie's settings have been collapsed (0 means collapsed).
+}
+
+/*******************************************************************************
+ * Buy All - Adds an "All" bulk buy option to the store
+ *
+ * Calculates the maximum affordable quantity per building and displays it
+ * as "xN" on each building row, updating in real time.
+ ******************************************************************************/
+AC.BuyAll = {};
+
+/**
+ * Calculates how many of a building the player can afford using binary search.
+ */
+AC.BuyAll.getMaxAffordable = function(building) {
+	var cookies = Game.cookies;
+	if (building.getSumPrice(1) > cookies) return 0;
+	var lo = 1, hi = 100000;
+	while (lo < hi) {
+		var mid = Math.ceil((lo + hi) / 2);
+		if (building.getSumPrice(mid) <= cookies) lo = mid;
+		else hi = mid - 1;
+	}
+	return lo;
+}
+
+/**
+ * Injects the Buy All button and hooks into the store refresh.
+ */
+AC.BuyAll.inject = function() {
+	// Add a "Buy All" (value -1) option to the bulk buy buttons
+	var origRefresh = Game.RefreshStore;
+	Game.RefreshStore = function() {
+		origRefresh();
+		AC.BuyAll.addButton();
+		if (Game.buyMode === 1 && Game.buyBulk === -1) {
+			AC.BuyAll.updatePrices();
+		}
+	}
+
+	// Hook into the draw logic to keep xN labels updated
+	var origDraw = Game.Draw;
+	Game.Draw = function() {
+		origDraw();
+		if (Game.buyMode === 1 && Game.buyBulk === -1) {
+			AC.BuyAll.updatePrices();
+		}
+	}
+
+	// Hook building buy to handle Buy All mode
+	for (var i in Game.ObjectsById) {
+		(function(building) {
+			var origBuy = building.buy;
+			building.buy = function(amount) {
+				if (Game.buyMode === 1 && Game.buyBulk === -1) {
+					var max = AC.BuyAll.getMaxAffordable(building);
+					if (max > 0) origBuy.call(building, max);
+				} else {
+					origBuy.call(building, amount);
+				}
+			};
+		})(Game.ObjectsById[i]);
+	}
+}
+
+/**
+ * Adds the "All" button to the store bulk buy bar.
+ */
+AC.BuyAll.addButton = function() {
+	var storeEl = l('storeBulk');
+	if (!storeEl || l('AC-buyAll-btn')) return;
+
+	var btn = document.createElement('div');
+	btn.id = 'AC-buyAll-btn';
+	btn.className = 'storePreButton storeBulkAmount';
+	btn.textContent = 'All';
+	btn.onclick = function() {
+		Game.buyMode = 1;
+		Game.buyBulk = -1;
+		Game.RefreshStore();
+		Game.storeTab = 0;
+		PlaySound('snd/tick.mp3');
+	};
+	storeEl.appendChild(btn);
+}
+
+/**
+ * Updates prices and xN labels for each building when Buy All is active.
+ */
+AC.BuyAll.updatePrices = function() {
+	var btn = l('AC-buyAll-btn');
+	if (btn) {
+		btn.classList.add('storeBulkSelected');
+		// Deselect other bulk buttons
+		var others = btn.parentNode.querySelectorAll('.storeBulkAmount');
+		for (var i = 0; i < others.length; i++) {
+			if (others[i] !== btn) others[i].classList.remove('storeBulkSelected');
+		}
+	}
+
+	for (var i in Game.ObjectsById) {
+		var building = Game.ObjectsById[i];
+		var max = AC.BuyAll.getMaxAffordable(building);
+		var el = l('productPrice' + building.id);
+		var nameEl = l('productName' + building.id);
+		if (el) {
+			el.textContent = max > 0 ? Beautify(building.getSumPrice(max)) : 'can\'t afford';
+			el.style.color = max > 0 ? '' : '#f44';
+		}
+		// Show xN on the product
+		var owned = l('productOwned' + building.id);
+		if (owned) {
+			var tag = owned.querySelector('.AC-buyAll-count');
+			if (!tag) {
+				tag = document.createElement('span');
+				tag.className = 'AC-buyAll-count';
+				tag.style.cssText = 'color:#fc5;margin-left:4px;font-weight:bold;';
+				owned.appendChild(tag);
+			}
+			tag.textContent = max > 0 ? 'x' + Beautify(max, 0) : '';
+		}
+	}
 }
 
 /*******************************************************************************
