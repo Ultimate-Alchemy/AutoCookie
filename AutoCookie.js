@@ -297,6 +297,7 @@ AC.Auto.prototype.run = function(runImmediately, interval) {
  */
 new AC.Auto('Autoclicker', 'Clicks the cookie at the specified rate. Set to 0 to disable.', 202101172056, function() {
 	Game.ClickCookie();
+	AC.Display.actualClicks++;
 }, {
 	'name': 'Interval',
 	'desc': 'How many times per second the cookie is clicked. Set to 0 to disable.',
@@ -786,6 +787,15 @@ AC.Display.createStatsHUD = function() {
 	clickLine.id = 'AC-hud-click';
 	hud.appendChild(clickLine);
 
+	var sep2 = document.createElement('span');
+	sep2.textContent = '  |  ';
+	sep2.style.color = '#888';
+	hud.appendChild(sep2);
+
+	var actualCpsLine = document.createElement('span');
+	actualCpsLine.id = 'AC-hud-actual-cps';
+	hud.appendChild(actualCpsLine);
+
 	// Append to the sectionLeft (cookie/milk area)
 	var sectionLeft = l('sectionLeft');
 	if (sectionLeft) {
@@ -796,9 +806,13 @@ AC.Display.createStatsHUD = function() {
 	}
 }
 
+AC.Display.actualClicks = 0;
+AC.Display.actualCps = 0;
+
 AC.Display.updateStatsHUD = function() {
 	var cpsEl = document.getElementById('AC-hud-cps');
 	var clickEl = document.getElementById('AC-hud-click');
+	var actualEl = document.getElementById('AC-hud-actual-cps');
 	if (!cpsEl) return;
 
 	var cps = Game.cookiesPs || 0;
@@ -806,10 +820,19 @@ AC.Display.updateStatsHUD = function() {
 
 	cpsEl.innerHTML = '<span style="color:#8f8">CPS:</span> ' + Beautify(cps, 1);
 	clickEl.innerHTML = '<span style="color:#8bf">Per Click:</span> ' + Beautify(mouseCps, 1);
+	if (actualEl) actualEl.innerHTML = '<span style="color:#fc5">Auto CPS:</span> ' + Beautify(AC.Display.actualCps, 0);
+}
+
+AC.Display.startActualCpsCounter = function() {
+	setInterval(function() {
+		AC.Display.actualCps = AC.Display.actualClicks;
+		AC.Display.actualClicks = 0;
+	}, 1000);
 }
 
 AC.Display.startStatsHUD = function() {
 	AC.Display.createStatsHUD();
+	AC.Display.startActualCpsCounter();
 	setInterval(AC.Display.updateStatsHUD, 200);
 }
 
