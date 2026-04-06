@@ -262,7 +262,16 @@ AC.Auto.prototype.run = function(runImmediately, interval) {
 		success = true;
 	}
 	if (typeof interval === 'number' && interval > 0) {
-		if (interval < 1) {
+		var setting = this.settings && this.settings['Interval'];
+		if (setting && setting.units === 'cps') {
+			// CPS mode: interval is clicks per second
+			var tickMs = 4;
+			var clicksPerTick = Math.max(1, Math.round(interval * tickMs / 1000));
+			var self = this;
+			this.intvlID = setInterval(function() {
+				for (var i = 0; i < clicksPerTick; i++) self.actionFunction();
+			}, tickMs);
+		} else if (interval < 1) {
 			// Sub-millisecond: batch multiple action calls per 1ms tick
 			var callsPerTick = Math.round(1 / interval);
 			var self = this;
@@ -284,20 +293,20 @@ AC.Auto.prototype.run = function(runImmediately, interval) {
  * If any automated action is removed or a setting from the automated actions is removed, it will break save data. Instead, for automated actions set its deprecated property to true. For a setting make its type 'deprecated'.
  ******************************************************************************/
 /**
- * This automated action clicks the cookie once every interval.
+ * This automated action clicks the cookie at the specified clicks per second rate.
  */
-new AC.Auto('Autoclicker', 'Clicks the cookie once every interval. Set to 0 to disable.', 202101172056, function() {
+new AC.Auto('Autoclicker', 'Clicks the cookie at the specified rate. Set to 0 to disable.', 202101172056, function() {
 	Game.ClickCookie();
 }, {
 	'name': 'Interval',
-	'desc': 'How often the cookie is clicked. Values below 1 ms batch multiple clicks per tick. Set to 0 to disable.',
+	'desc': 'How many times per second the cookie is clicked. Set to 0 to disable.',
 	'type': 'slider',
 	'timeCreated': 202101172101,
 	'value': 0,
-	'units': 'ms',
+	'units': 'cps',
 	'min': 0,
-	'max': 1000,
-	'step': 0.1
+	'max': 50000,
+	'step': 100
 });
 
 /**
